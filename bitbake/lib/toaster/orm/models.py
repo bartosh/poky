@@ -1138,6 +1138,21 @@ class ProjectLayer(models.Model):
     class Meta:
         unique_together = (("project", "layercommit"),)
 
+class ProjectAvailableLayer(models.Model):
+    project = models.ForeignKey(Project, null=True, default=None)
+    layer = models.ForeignKey(Layer)
+    build = models.ForeignKey(Build, default=None, null=True)
+    layer_source = models.ForeignKey(LayerSource, null=True, default=None)
+    layer_version = models.ForeignKey(Layer_Version)
+    up_id = models.IntegerField(null=True, default=None)
+    up_date = models.DateTimeField(null=True, default=None)
+    up_branch = models.ForeignKey(Branch, null=True, default=None)
+    branch = models.CharField(max_length=80)
+    commit = models.CharField(max_length=100)
+    dirpath = models.CharField(max_length=255, null=True, default=None)
+    priority = models.IntegerField(default=0)
+    local_path = models.FilePathField(max_length=1024, default="/")
+
 class ProjectVariable(models.Model):
     project = models.ForeignKey(Project)
     name = models.CharField(max_length=100)
