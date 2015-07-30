@@ -1153,6 +1153,23 @@ class ProjectAvailableLayer(models.Model):
     priority = models.IntegerField(default=0)
     local_path = models.FilePathField(max_length=1024, default="/")
 
+class ProjectAvailableRecipe(models.Model):
+    name = models.CharField(max_length=100, blank=True)
+    version = models.CharField(max_length=100, blank=True)
+    project = models.ForeignKey(Project, null=True, default=None)
+    summary = models.TextField(blank=True)
+    description = models.TextField(blank=True)
+    section = models.CharField(max_length=100, blank=True)
+    license = models.CharField(max_length=200, blank=True)
+    homepage = models.URLField(blank=True)
+    bugtracker = models.URLField(blank=True)
+    file_path = models.FilePathField(max_length=255)
+    pathflags = models.CharField(max_length=200, blank=True)
+    is_image = models.BooleanField(default=False)
+    build = models.ForeignKey(Build, default=None, null=True)
+    available_layer = models.ForeignKey(ProjectAvailableLayer,
+                                        default=None, null=True)
+
 class ProjectVariable(models.Model):
     project = models.ForeignKey(Project)
     name = models.CharField(max_length=100)
