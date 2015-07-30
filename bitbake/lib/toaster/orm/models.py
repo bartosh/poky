@@ -1170,6 +1170,23 @@ class ProjectAvailableRecipe(models.Model):
     available_layer = models.ForeignKey(ProjectAvailableLayer,
                                         default=None, null=True)
 
+class ProjectAvailablePackage(models.Model):
+    name = models.CharField(max_length=100)
+    version = models.CharField(max_length=100, blank=True)
+    revision = models.CharField(max_length=32, blank=True)
+    project = models.ForeignKey(Project, null=True, default=None)
+    recipe = models.ForeignKey(Recipe, null=True)
+    installed_name = models.CharField(max_length=100, default='')
+    summary = models.TextField(blank=True)
+    description = models.TextField(blank=True)
+    size = models.IntegerField(default=0)
+    installed_size = models.IntegerField(default=0)
+    section = models.CharField(max_length=80, blank=True)
+    license = models.CharField(max_length=80, blank=True)
+    build = models.ForeignKey(Build, default=None, null=True)
+    available_recipe = models.ForeignKey(ProjectAvailableRecipe,
+                                         default=None, null=True)
+
 class ProjectVariable(models.Model):
     project = models.ForeignKey(Project)
     name = models.CharField(max_length=100)
