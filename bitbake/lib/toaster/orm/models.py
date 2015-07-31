@@ -1187,6 +1187,12 @@ class ProjectAvailablePackage(models.Model):
     available_recipe = models.ForeignKey(ProjectAvailableRecipe,
                                          default=None, null=True)
 
+class ProjectCustomRecipe(models.Model):
+    name = models.CharField(max_length=100)
+    base_recipe = models.ForeignKey(ProjectAvailableRecipe)
+    packages = models.ManyToManyField(ProjectAvailablePackage)
+    project = models.ForeignKey(Project)
+
 class ProjectVariable(models.Model):
     project = models.ForeignKey(Project)
     name = models.CharField(max_length=100)
