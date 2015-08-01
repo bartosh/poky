@@ -21,6 +21,7 @@
 
 from toastergui.widgets import ToasterTable, ToasterTemplateView
 from orm.models import Recipe, ProjectLayer, Layer_Version, Machine, Project
+from orm.models import ProjectAvailableRecipe
 from django.db.models import Q, Max
 from django.conf.urls import url
 from django.core.urlresolvers import reverse
@@ -478,3 +479,88 @@ class ProjectLayersRecipesTable(RecipesTable):
         super(ProjectLayersRecipesTable, self).setup_queryset(*args, **kwargs)
         prj = Project.objects.get(pk = kwargs['pid'])
         self.queryset = self.queryset.filter(layer_version__in = prj.projectlayer_equivalent_set())
+
+class ProjectAvailableRecipesTable(RecipesTable):
+    """Table that lists image recipes available for the project."""
+
+    def __init__(self, *args, **kwargs):
+        RecipesTable.__init__(self, *args, **kwargs)
+        self.default_orderby = "name"
+
+    def setup_queryset(self, *args, **kwargs):
+        prj = Project.objects.get(pk = kwargs['pid'])
+        query = Q(project=prj) | Q(project__isnull=True)
+        queryset = ProjectAvailableRecipe.objects.filter(query)
+        self.queryset = queryset.order_by(self.default_orderby)
+
+    def setup_filters(self, *args, **kwargs):
+        self.add_filter(title="Filter by project image recipes",
+                        name="in_current_project",
+                        filter_actions=[
+                            self.make_filter_action(\
+                                "in_project",
+                                "Image recipes provided by layers added "
+                                "to this project",
+                                self.filter_in_project),
+                            self.make_filter_action(\
+                                "not_in_project",
+                                "Image recipes provided by layers not added "
+                                "to this project",
+                                self.filter_not_in_project)
+                        ])
+
+
+    def setup_columns(self, *args, **kwargs):
+        self.add_column(title="Image recipe",
+                        help_text="When you build image recipe, you get an "
+                                  "image, i.e. a root file system you can"
+                                  "deploy to your machine",
+                        hideable=False,
+                        orderable=True,
+                        field_name="name")
+
+        self.add_column(title="Version",
+                        hidden=True,
+                        field_name="version")
+
+        self.add_column(title="Description",
+                        field_name="get_description_or_summary")
+
+        layer_link_template = '''
+            <a href="{% url 'layerdetails' extra.pid data.available_layer.layer_version.id %}">
+            {{data.available_layer.layer_version.layer.name}}</a>
+            '''
+        self.add_column(title="Layer",
+                        help_text="The name of the layer providing the recipe",
+                        orderable=True,
+                        static_data_name="available_layer__layer__name",
+                        static_data_template=layer_link_template)
+
+        self.add_column(title="License",
+                        help_text="The list of source licenses for the recipe."
+                                  " Separate licence names using | (pipe) "
+                                  "means there is a choice between lincences. "
+                                  "Separatel lincence names using & "
+                                  " (ampersand) means ultiple licenses exist "
+                                  "that cover different parts of the source",
+                        orderable=True,
+                        field_name="license")
+
+        self.add_column(title="Revision",
+                        field_name="layer_version__get_vcs_reference")
+
+        self.add_column(title="Section",
+                        help_text="The section in which packages should be "
+                                  "categorized. There are 5 sections: base, "
+                                  "console, utils, devel and libs.",
+                        orderable=True,
+                        field_name="section")
+
+#       self.add_column(title="Customise",
+#                       help_text="Save an existing base image recipe with "
+#                                 "the new name and edit the list of packages "
+#                                 "it installs to suit your needs",
+#                       hideable=False,
+#                       filter_name="in_current_project",
+#                       static_data_name="customise",
+#                       static_data_template='{% include "customise_btn.html" %}')
