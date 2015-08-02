@@ -1111,6 +1111,49 @@ class Layer_Version(models.Model):
             return self.up_branch.name
         return ("Cannot determine the vcs_reference for layer version %s" % vars(self))
 
+    def update_available(self, recipes=None):
+        """Update ProjectAvailable* caches."""
+        # Update available layers
+        avail_layers = ProjectAvailableLayer.objects.filter(layer=self.layer, \
+                           build__isnull=(self.build is None))
+
+        project = self.project
+        if not project and self.build:
+            project = self.build.project
+
+        if project:
+            avail_layers = avail_layers.filter(project=project)
+
+        avail_layers.delete()
+
+        pal = ProjectAvailableLayer.objects.create(\
+                project=project, layer=self.layer, build=self.build,
+                layer_source=self.layer_source, layer_version=self,
+                up_id=self.up_id, up_date=self.up_date,
+                up_branch=self.up_branch, branch=self.branch,
+                commit=self.commit, dirpath=self.dirpath,
+                priority=self.priority, local_path=self.local_path)
+
+        # And available image recipes
+        if not recipes:
+            recipes = Recipe.objects.filter(layer_version=self, is_image=True)
+
+        for recipe in recipes:
+            ProjectAvailableRecipe.objects.filter(project=project, \
+                 name=recipe.name, version=recipe.version,
+                 build__isnull=(self.build is None)).delete()
+
+            par = ProjectAvailableRecipe.objects.create(\
+                      name=recipe.name, version=recipe.version,
+                      project=project, summary=recipe.summary,
+                      description=recipe.description,
+                      section=recipe.section, license=recipe.license,
+                      homepage=recipe.homepage,
+                      bugtracker=recipe.bugtracker,
+                      file_path=recipe.file_path,
+                      pathflags=recipe.pathflags, is_image=recipe.is_image,
+                      build=self.build, available_layer=pal)
+
     def __unicode__(self):
         return "%d %s (VCS %s, Project %s)" % (self.pk, str(self.layer), self.get_vcs_reference(), self.build.project if self.build is not None else "No project")
 
