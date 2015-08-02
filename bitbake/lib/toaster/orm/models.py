@@ -734,6 +734,7 @@ class LocalLayerSource(LayerSource):
         """
             Fetches layer, recipe and machine information from local repository
         """
+        # TODO: Update ProjectAvailable* caches
         pass
 
 class ImportedLayerSource(LayerSource):
@@ -748,6 +749,7 @@ class ImportedLayerSource(LayerSource):
         """
             Fetches layer, recipe and machine information from local repository
         """
+        # TODO: Update ProjectAvailable* caches
         pass
 
 
