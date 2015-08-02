@@ -928,7 +928,9 @@ class LayerIndexLayerSource(LayerSource):
             transaction.set_autocommit(False)
         for ri in recipes_info:
             try:
-                ro, created = Recipe.objects.get_or_create(layer_source = self, up_id = ri['id'], layer_version = Layer_Version.objects.get(layer_source = self, up_id = ri['layerbranch']))
+                lv = Layer_Version.objects.get(layer_source=self, up_id=ri['layerbranch'])
+                ro, created = Recipe.objects.get_or_create(layer_source=self, \
+                                  up_id=ri['id'], layer_version=lv)
                 ro.up_date = ri['updated']
                 ro.name = ri['pn']
                 ro.version = ri['pv']
@@ -944,6 +946,9 @@ class LayerIndexLayerSource(LayerSource):
                 else: # workaround for old style layer index
                     ro.is_image = "-image-" in ri['pn']
                 ro.save()
+                # update ProjectAvailable caches
+                if ro.is_image:
+                    lv.update_available([ro])
             except:
                 #print "Duplicate Recipe, ignoring: ", vars(ro)
                 pass
