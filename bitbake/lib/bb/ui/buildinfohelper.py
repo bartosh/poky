@@ -1309,6 +1309,11 @@ class BuildInfoHelper(object):
         self.orm_wrapper.create_logmessage(log_information)
 
     def close(self, errorcode):
+        if errorcode == 0:
+            # Update ProjectAvailable* caches
+            for lv in self.orm_wrapper.layer_version_objects:
+                lv.update_available()
+
         if self.brbe is not None:
             self._store_build_done(errorcode)
 
