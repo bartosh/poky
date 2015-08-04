@@ -2267,6 +2267,7 @@ if True:
 
     from django.views.decorators.csrf import csrf_exempt
     @csrf_exempt
+    @xhr_response
     def xhr_datatypeahead(request, pid):
         try:
             prj = Project.objects.get(pk = pid)
@@ -2276,7 +2277,7 @@ if True:
             if request.GET.get('type', None) == "versionlayers":
                 # If we're already on this project do nothing
                 if prj.release.pk == int(request.GET.get('search', -1)):
-                    return HttpResponse(jsonfilter({"error": "ok", "rows": []}), content_type="application/json")
+                    return {"error": "ok", "rows": []}
 
                 retval = []
 
@@ -2286,10 +2287,9 @@ if True:
                     if lv.count() < 1:
                         retval.append(i)
 
-                return HttpResponse(jsonfilter( {"error":"ok",
-                    "rows" : map( _lv_to_dict(prj),  map(lambda x: x.layercommit, retval ))
-                    }), content_type = "application/json")
-
+                return {"error":"ok",
+                        "rows" : map(_lv_to_dict(prj),
+                                 map(lambda x: x.layercommit, retval))}
 
             # returns layer versions that provide the named targets
             if request.GET.get('type', None) == "layers4target":
@@ -2305,14 +2305,14 @@ if True:
                     # and show only the selected layers for this project
                     final_list = set([x.get_equivalents_wpriority(prj)[0] for x in queryset_all])
 
-                return HttpResponse(jsonfilter( { "error":"ok",  "rows" : map( _lv_to_dict(prj), final_list) }), content_type = "application/json")
+                return { "error": "ok", "rows": map(_lv_to_dict(prj), final_list)}
 
 
             raise Exception("Unknown request! " + request.GET.get('type', "No parameter supplied"))
         except Exception as e:
-            return HttpResponse(jsonfilter({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
+            return {"error": str(e) + "\n" + traceback.format_exc()}
 
-
+    @xhr_response
     def xhr_configvaredit(request, pid):
         try:
             prj = Project.objects.get(id = pid)
@@ -2376,24 +2376,24 @@ if True:
             except ProjectVariable.DoesNotExist:
                 pass
 
-            return HttpResponse(json.dumps( return_data ), content_type = "application/json")
+            return return_data
 
         except Exception as e:
-            return HttpResponse(json.dumps({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
+            return {"error":str(e) + "\n" + traceback.format_exc()}
 
-
+    @xhr_response
     def xhr_importlayer(request):
         if (not request.POST.has_key('vcs_url') or
             not request.POST.has_key('name') or
             not request.POST.has_key('git_ref') or
             not request.POST.has_key('project_id')):
-          return HttpResponse(jsonfilter({"error": "Missing parameters; requires vcs_url, name, git_ref and project_id"}), content_type = "application/json")
+          return {"error": "Missing parameters; requires vcs_url, name, git_ref and project_id"}
 
         layers_added = [];
 
         # Rudimentary check for any possible html tags
         if "<" in request.POST:
-          return HttpResponse(jsonfilter({"error": "Invalid character <"}), content_type = "application/json")
+          return {"error": "Invalid character <"}
 
         prj = Project.objects.get(pk=request.POST['project_id'])
 
@@ -2413,7 +2413,7 @@ if True:
         try:
             layer, layer_created = Layer.objects.get_or_create(name=post_data['name'])
         except MultipleObjectsReturned:
-            return HttpResponse(jsonfilter({"error": "hint-layer-exists"}), content_type = "application/json")
+            return {"error": "hint-layer-exists"}
 
         if layer:
             if layer_created:
@@ -2426,14 +2426,17 @@ if True:
                 # url is the same, if it is then we can just create a new layer
                 # version for this layer. Otherwise we need to bail out.
                 if layer.vcs_url != post_data['vcs_url']:
-                    return HttpResponse(jsonfilter({"error": "hint-layer-exists-with-different-url" , "current_url" : layer.vcs_url, "current_id": layer.id }), content_type = "application/json")
+                    return {"error": "hint-layer-exists-with-different-url",
+                            "current_url" : layer.vcs_url,
+                            "current_id": layer.id }
 
 
             layer_version, version_created = Layer_Version.objects.get_or_create(layer_source=layer_source, layer=layer, project=prj, up_branch_id=up_branch.id,branch=post_data['git_ref'],  commit=post_data['git_ref'], dirpath=post_data['dir_path'])
 
             if layer_version:
                 if not version_created:
-                    return HttpResponse(jsonfilter({"error": "hint-layer-version-exists", "existing_layer_version": layer_version.id }), content_type = "application/json")
+                    return {"error": "hint-layer-version-exists",
+                            "existing_layer_version": layer_version.id}
 
                 layer_version.up_date = timezone.now()
                 layer_version.save()
@@ -2473,7 +2476,7 @@ if True:
                 if layer_created:
                     layer.delete()
 
-                return HttpResponse(jsonfilter({"error": "Uncaught error: Could not create layer version"}), content_type = "application/json")
+                return {"error": "Uncaught error: Could not create layer version"}
 
         layerdetailurl = reverse('layerdetails', args=(prj.id, layer_version.pk))
 
@@ -2485,20 +2488,18 @@ if True:
                          },
                          "deps_added": layers_added }
 
-        return HttpResponse(jsonfilter(json_response), content_type = "application/json")
+        return json_response
 
+    @xhr_response
     def xhr_updatelayer(request):
 
-        def error_response(error):
-            return HttpResponse(jsonfilter({"error": error}), content_type = "application/json")
-
         if not request.POST.has_key("layer_version_id"):
-            return error_response("Please specify a layer version id")
+            return {"error": "Please specify a layer version id"}
         try:
             layer_version_id = request.POST["layer_version_id"]
             layer_version = Layer_Version.objects.get(id=layer_version_id)
         except:
-            return error_response("Cannot find layer to update")
+            return {"error": "Cannot find layer to update"}
 
 
         if request.POST.has_key("vcs_url"):
@@ -2529,7 +2530,7 @@ if True:
         except:
             return error_response("Could not update layer version entry")
 
-        return HttpResponse(jsonfilter({"error": "ok",}), content_type = "application/json")
+        return {"error": "ok"}
 
 
 
