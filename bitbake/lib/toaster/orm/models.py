@@ -1243,6 +1243,9 @@ class ProjectCustomRecipe(models.Model):
     packages = models.ManyToManyField(ProjectAvailablePackage)
     project = models.ForeignKey(Project)
 
+    class Meta:
+        unique_together = ("name", "project")
+
 class ProjectVariable(models.Model):
     project = models.ForeignKey(Project)
     name = models.CharField(max_length=100)
