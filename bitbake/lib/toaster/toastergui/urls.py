@@ -131,6 +131,10 @@ urlpatterns = patterns('toastergui.views',
         url(r'^xhr_importlayer/$', 'xhr_importlayer', name='xhr_importlayer'),
         url(r'^xhr_updatelayer/$', 'xhr_updatelayer', name='xhr_updatelayer'),
 
+        # image customisation functionality
+        url(r'^customrecipe/(?P<recipe_id>\d+)$', 'customrecipe',
+            name="customrecipe"),
+
         # default redirection
         url(r'^$', RedirectView.as_view( url= 'landing')),
 )

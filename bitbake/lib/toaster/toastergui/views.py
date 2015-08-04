@@ -2563,6 +2563,10 @@ if True:
 
         return(vars_managed,sorted(vars_fstypes),vars_blacklist)
 
+    @_template_renderer("customrecipe.html")
+    def customrecipe(request, recipe_id):
+        return {}
+
     @_template_renderer("projectconf.html")
     def projectconf(request, pid):
 
