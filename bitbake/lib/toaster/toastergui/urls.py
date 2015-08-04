@@ -132,6 +132,8 @@ urlpatterns = patterns('toastergui.views',
         url(r'^xhr_updatelayer/$', 'xhr_updatelayer', name='xhr_updatelayer'),
 
         # image customisation functionality
+        url(r'^xhr_createcustomrecipe/$', 'xhr_createcustomrecipe',
+            name='xhr_createcustomrecipe'),
         url(r'^customrecipe/(?P<recipe_id>\d+)$', 'customrecipe',
             name="customrecipe"),
 

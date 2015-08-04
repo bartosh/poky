@@ -2532,7 +2532,52 @@ if True:
 
         return {"error": "ok"}
 
+    @xhr_response
+    def xhr_createcustomrecipe(request):
+        """
+        REST API Create custom recipe.
 
+        Entry point: /xhr_createcustomrecipe/
+        Method: POST
+        Parameters:
+            project_id: target project id
+            name: name of custom recipe to create
+            baserecipe_id: id of base recipe from ProjectAvailableRecipe model
+        Returns:
+            {"error": "ok",
+             "url": <url of the created recipe>}
+            or
+            {"error": <error message>}
+        """
+        # check if request has all required parameters
+        for param in ('project_id', 'name', 'baserecipe_id'):
+            if param in request.POST:
+                return {"error": "Missing parameters; requires "
+                                  "name and baserecipe_id"}
+
+        # get project and baserecipe objects
+        params = {}
+        for name, field, model in [("project", "project_id", Project),
+                                   ("baserecipe", "baserecipe_id", ProjectAvailableRecipe)]:
+            obj_id = request.POST[field]
+            try:
+                params[name] = model.get(id=obj_id)
+            except model.DoesNotExist:
+                return {"error": "Invalid %s %d" % (field, obj_id)}
+
+        # create custom recipe
+        try:
+            recipe = ProjectCustomRecipe.objects.create(
+                         name=request.POST["name"],
+                         base_recipe=params["baserecipe"],
+                         project=params["project"])
+        except Error as err:
+            return {"error": "Can't create custom recipe: %s" % err}
+
+        # FIXME: Copy packages
+
+        return {"error": "ok",
+                "url": reverse('customrecipe', args(recipe.id,))}
 
     def importlayer(request, pid):
         template = "importlayer.html"
