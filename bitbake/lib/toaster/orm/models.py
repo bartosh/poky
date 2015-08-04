@@ -1161,6 +1161,23 @@ class Layer_Version(models.Model):
                       pathflags=recipe.pathflags, is_image=recipe.is_image,
                       build=self.build, available_layer=pal)
 
+        # And available packages
+        if self.build:
+            for package in self.build.package_set.all():
+                ProjectAvailablePackage.objects.filter(project=project, \
+                    name=package.name, version=package.version).delete()
+
+                ProjectAvailablePackage.objects.create(\
+                    name=package.name, version=package.version,
+                    revision=package.revision, project=project,
+                    recipe=package.recipe,
+                    installed_name=package.installed_name,
+                    summary=package.summary,
+                    description=package.description, size=package.size,
+                    installed_size=package.installed_size,
+                    section=package.section, license=package.license,
+                    build=package.build)
+
     def __unicode__(self):
         return "%d %s (VCS %s, Project %s)" % (self.pk, str(self.layer), self.get_vcs_reference(), self.build.project if self.build is not None else "No project")
 
