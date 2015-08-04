@@ -20,6 +20,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import operator,re
+from functools import wraps
 
 from django.db.models import F, Q, Sum, Count, Max
 from django.db import IntegrityError
@@ -2252,6 +2253,17 @@ if True:
 
         return context
 
+    def xhr_response(fun):
+        """
+        Decorator for REST methods.
+        calls jsonfilter on the returned dictionary and returns result
+        as HttpResponse object of content_type application/json
+        """
+        @wraps(fun)
+        def wrapper(*args, **kwds):
+            return HttpResponse(jsonfilter(fun(*args, **kwds)),
+                                content_type="application/json")
+        return wrapper
 
     from django.views.decorators.csrf import csrf_exempt
     @csrf_exempt
